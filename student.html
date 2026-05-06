@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard - Room Availability System</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <h1>College of Engineering and Architecture</h1>
+            <div class="user-info">
+                <span id="currentUser"></span>
+                <button onclick="logout()" class="btn btn-secondary">Logout</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="student-dashboard">
+        <div class="content-header">
+            <h2>Room Availability</h2>
+            <div class="content-actions">
+                <input type="text" id="searchInput" placeholder="Search rooms..." class="search-input">
+                <select id="filterStatus" class="filter-select">
+                    <option value="">All Rooms</option>
+                    <option value="available">Available Only</option>
+                    <option value="occupied">Occupied Only</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>Total Rooms</h3>
+                <p class="stat-number" id="totalRooms">0</p>
+            </div>
+            <div class="stat-card available">
+                <h3>Available Now</h3>
+                <p class="stat-number" id="availableRooms">0</p>
+            </div>
+            <div class="stat-card occupied">
+                <h3>Currently Occupied</h3>
+                <p class="stat-number" id="occupiedRooms">0</p>
+            </div>
+        </div>
+
+        <div class="rooms-grid" id="roomsGrid">
+            <!-- Room cards will be populated here -->
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 College of Engineering and Architecture. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <div id="notification" class="notification"></div>
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auth Test - Room Availability System</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <h1>Auth Test Page</h1>
+            <div class="user-info">
+                <span id="currentUser"></span>
+                <button onclick="logout()" class="btn btn-secondary">Logout</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="content-header">
+            <h2>Authentication Test</h2>
+            <div class="content-actions">
+                <button onclick="simulateLogin()" class="btn btn-primary">Simulate Login</button>
+                <button onclick="simulateLogout()" class="btn btn-danger">Simulate Logout</button>
+                <button onclick="checkAuthState()" class="btn btn-secondary">Check Auth State</button>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>Auth Status</h3>
+                <p class="stat-number" id="authStatus">Not Authenticated</p>
+            </div>
+            <div class="stat-card">
+                <h3>User Info Visible</h3>
+                <p class="stat-number" id="userInfoVisible">No</p>
+            </div>
+            <div class="stat-card">
+                <h3>Logout Button Visible</h3>
+                <p class="stat-number" id="logoutButtonVisible">No</p>
+            </div>
+        </div>
+
+        <div id="testResults" class="rooms-table-container">
+            <h3>Test Results:</h3>
+            <div id="results"></div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2026 College of Engineering and Architecture. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <div id="notification" class="notification"></div>
+    <script src="script.js"></script>
+    <script>
+        // Test functions
+        function simulateLogin() {
+            const testUser = {
+                id: 999,
+                username: 'testuser',
+                password: 'test123',
+                fullName: 'Test User',
+                email: 'test@cea.edu',
+                role: 'instructor'
+            };
+            
+            currentUser = testUser;
+            localStorage.setItem('currentUser', JSON.stringify(testUser));
+            
+            updateCurrentUserDisplay();
+            updateAuthUI();
+            updateTestStatus();
+            
+            showNotification('Simulated login successful!', 'success');
+        }
+
+        function simulateLogout() {
+            localStorage.removeItem('currentUser');
+            currentUser = null;
+            
+            updateCurrentUserDisplay();
+            updateAuthUI();
+            updateTestStatus();
+            
+            showNotification('Simulated logout successful!', 'success');
+        }
+
+        function checkAuthState() {
+            const results = document.getElementById('results');
+            const authStatus = document.getElementById('authStatus');
+            const userInfoVisible = document.getElementById('userInfoVisible');
+            const logoutButtonVisible = document.getElementById('logoutButtonVisible');
+            
+            const userElement = document.getElementById('currentUser');
+            const logoutButton = document.querySelector('[onclick="logout()"]');
+            
+            const tests = [
+                `Current User: ${currentUser ? currentUser.fullName : 'None'}`,
+                `User Info Element Display: ${userElement ? userElement.style.display : 'Not found'}`,
+                `Logout Button Display: ${logoutButton ? logoutButton.style.display : 'Not found'}`,
+                `LocalStorage CurrentUser: ${localStorage.getItem('currentUser') ? 'Exists' : 'None'}`,
+                `Is Authenticated: ${!!currentUser}`
+            ];
+            
+            results.innerHTML = tests.map(test => `<p>${test}</p>`).join('');
+            
+            authStatus.textContent = currentUser ? 'Authenticated' : 'Not Authenticated';
+            userInfoVisible.textContent = userElement && userElement.style.display !== 'none' ? 'Yes' : 'No';
+            logoutButtonVisible.textContent = logoutButton && logoutButton.style.display !== 'none' ? 'Yes' : 'No';
+        }
+
+        function updateTestStatus() {
+            checkAuthState();
+        }
+
+        // Initialize test page
+        document.addEventListener('DOMContentLoaded', function() {
+            // Skip auth check for this test page
+            updateTestStatus();
+        });
+    </script>
+</body>
+</html>

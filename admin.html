@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Room Availability System</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <h1>CEA Room Management System</h1>
+            <div class="user-info">
+                <span id="currentUser"></span>
+                <button onclick="logout()" class="btn btn-secondary">Logout</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="dashboard-container">
+        <aside class="sidebar">
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="#" class="nav-link active" data-page="dashboard">📊 Dashboard</a></li>
+                    <li><a href="#" class="nav-link" data-page="rooms">🏫 Rooms</a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <div class="content-header">
+                <h2>Room Management Dashboard</h2>
+                <div class="content-actions">
+                    <input type="text" id="searchInput" placeholder="Search rooms..." class="search-input">
+                    <select id="filterStatus" class="filter-select">
+                        <option value="">All Status</option>
+                        <option value="available">Available</option>
+                        <option value="occupied">Occupied</option>
+                    </select>
+                    <button onclick="openAddRoomModal()" class="btn btn-primary">➕ Add Room</button>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3>Total Rooms</h3>
+                    <p class="stat-number" id="totalRooms">0</p>
+                </div>
+                <div class="stat-card available">
+                    <h3>Available</h3>
+                    <p class="stat-number" id="availableRooms">0</p>
+                </div>
+                <div class="stat-card occupied">
+                    <h3>Occupied</h3>
+                    <p class="stat-number" id="occupiedRooms">0</p>
+                </div>
+            </div>
+
+            <div class="rooms-table-container">
+                <table class="rooms-table">
+                    <thead>
+                        <tr>
+                            <th>Room Name</th>
+                            <th>Building</th>
+                            <th>Capacity</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="roomsTableBody">
+                        <!-- Rooms will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add/Edit Room Modal -->
+    <div id="roomModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Add Room</h3>
+                <span class="close" onclick="closeRoomModal()">&times;</span>
+            </div>
+            <form id="roomForm">
+                <input type="hidden" id="roomId">
+                <div class="form-group">
+                    <label for="roomName">Room Name</label>
+                    <input type="text" id="roomName" required>
+                </div>
+                <div class="form-group">
+                    <label for="building">Building</label>
+                    <input type="text" id="building" required>
+                </div>
+                <div class="form-group">
+                    <label for="capacity">Capacity</label>
+                    <input type="number" id="capacity" min="1" required>
+                </div>
+                <div class="form-group">
+                    <label for="status">Status</label>
+                    <select id="status" required>
+                        <option value="available">Available</option>
+                        <option value="occupied">Occupied</option>
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button type="button" onclick="closeRoomModal()" class="btn btn-secondary">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2026 College of Engineering and Architecture. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <div id="notification" class="notification"></div>
+    <script src="script.js"></script>
+</body>
+</html>

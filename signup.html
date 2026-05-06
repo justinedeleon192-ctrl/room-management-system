@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - Room Availability System</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <h1>College of Engineering and Architecture</h1>
+        </div>
+    </header>
+
+    <main class="signup-container">
+        <div class="signup-content">
+            <div class="signup-form-section">
+                <div class="signup-card">
+                    <h2>Create Account</h2>
+                    <form id="signupForm">
+                        <div class="form-group">
+                            <label for="fullName">Full Name</label>
+                            <input type="text" id="fullName" name="fullName" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Email</label>
+                            <input type="email" id="email" name="email" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="username">Username</label>
+                            <input type="text" id="username" name="username" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="password">Password</label>
+                            <input type="password" id="password" name="password" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="role">Role</label>
+                            <select id="role" name="role" required>
+                                <option value="">Select Role</option>
+                                <option value="student">Student</option>
+                                <option value="instructor">Instructor</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Sign Up</button>
+                    </form>
+                    <p class="login-link">
+                        Already have an account? <a href="index.html">Login</a>
+                    </p>
+                </div>
+            </div>
+            <div class="logo-section">
+                <div class="logo-placeholder">
+                    <svg width="200" height="200" viewBox="0 0 200 200" fill="none">
+                        <rect width="200" height="200" fill="#8B0000"/>
+                        <text x="100" y="90" text-anchor="middle" fill="white" font-size="24" font-weight="bold">CEA</text>
+                        <text x="100" y="120" text-anchor="middle" fill="white" font-size="14">Room System</text>
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2026 College of Engineering and Architecture. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <div id="notification" class="notification"></div>
+    <script src="script.js"></script>
+</body>
+</html>
