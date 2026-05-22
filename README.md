@@ -1,160 +1,135 @@
-# Room Availability System
+# CEA Room Management System
 
-A modern, responsive Room Availability System built for the College of Engineering and Architecture. This frontend-only application uses HTML, CSS, and vanilla JavaScript with a beautiful maroon and white academic theme.
+A PHP and MySQL room availability system for the College of Engineering and Architecture. The app supports student and instructor accounts, role-based dashboards, and room availability management through a XAMPP-friendly backend.
 
-## 🎯 Features
+## Features
 
-### 🔐 Authentication System
-- **Login Page** with username/password fields
-- **Signup Page** with role selection (Student/Instructor)
-- Role-based redirects (Admin → Admin Dashboard, Student → Student View)
-- Session management using localStorage
+- Student and instructor registration
+- Secure login using PHP password hashing
+- PHP session-based authentication
+- Role-based redirects after login
+- Instructor room management: add, edit, delete, and update room status
+- Student room availability view
+- Room search, filtering, and dashboard statistics
+- MySQL persistence for users and rooms
 
-### 👥 User Roles & Permissions
+## Tech Stack
 
-#### 🧑‍💼 Admin / Instructor
-- Full CRUD operations on rooms
-- Add, edit, delete rooms
-- Change room availability status
-- View comprehensive room statistics
-- Search and filter functionality
+- HTML, CSS, and vanilla JavaScript
+- PHP 8+
+- MySQL / MariaDB
+- PDO database access
+- XAMPP Apache and MySQL
 
-#### 🎓 Student
-- View-only access to room information
-- See room availability status
-- Search and filter rooms
-- Clean, intuitive interface
+## Project Structure
 
-### 🏫 Room Management System
-- **Room List Display** in table (Admin) and card (Student) layouts
-- **Color-coded Status Indicators**:
-  - 🟢 Green = Available
-  - 🔴 Red = Occupied
-- **Room Information**: Name, Building, Capacity, Status
-- **Real-time Updates** with localStorage persistence
-
-### 🎨 Design Features
-- **Maroon/White Academic Theme** matching College of Engineering and Architecture
-- **Responsive Design** for mobile and desktop
-- **Modern UI Elements**: Soft shadows, rounded buttons, clean typography
-- **Professional Layout** with header and footer bars
-- **Logo Placement** on right side (login/signup pages)
-
-### ⚙️ Technical Implementation
-- **HTML5** semantic structure
-- **CSS3** with Flexbox/Grid layouts
-- **Vanilla JavaScript** (no frameworks)
-- **localStorage** for data persistence
-- **Modular Code Structure** with clear functions
-
-### ⭐ Bonus Features
-- **Search Functionality** - Filter rooms by name or building
-- **Status Filtering** - View available/occupied rooms only
-- **Toast Notifications** - User-friendly feedback messages
-- **Statistics Dashboard** - Real-time room counts
-- **Modal Forms** - Modern add/edit room interface
-- **Responsive Tables** - Mobile-friendly data display
-
-## 📁 Project Structure
-
-```
-room-availability-system/
-├── index.html          # Login page
-├── signup.html         # User registration
-├── admin.html          # Admin dashboard
-├── student.html        # Student view
-├── styles.css          # Complete styling with academic theme
-├── script.js           # All JavaScript functionality
-└── README.md           # Project documentation
+```text
+rms/
+├── api/
+│   ├── auth.php
+│   └── rooms.php
+├── config/
+│   └── database.php
+├── database/
+│   └── schema.sql
+├── includes/
+│   ├── functions.php
+│   └── session.php
+├── public/
+│   └── script-php.js
+├── admin.html
+├── index.html
+├── signup.html
+├── student.html
+├── styles.css
+└── README.md
 ```
 
-## 🚀 Getting Started
+## Setup
 
-1. **Download/Clone** the project files
-2. **Open `index.html`** in your web browser
-3. **Default Login Credentials**:
-   - **Admin**: Username: `admin`, Password: `admin123`
-   - **Student**: Username: `student`, Password: `student123`
+1. Copy or clone the project into your XAMPP `htdocs` folder:
 
-## 📱 Usage Instructions
+```text
+C:\xampp\htdocs\rms
+```
 
-### For Admin/Instructors:
-1. Login with admin credentials
-2. View the dashboard with room statistics
-3. **Add Rooms**: Click "➕ Add Room" button
-4. **Edit Rooms**: Click "Edit" button in room table
-5. **Delete Rooms**: Click "Delete" button (with confirmation)
-6. **Toggle Status**: Click "Mark Available/Occupied" buttons
-7. **Search**: Use the search bar to find specific rooms
-8. **Filter**: Use dropdown to filter by status
+2. Start Apache and MySQL in XAMPP.
 
-### For Students:
-1. Login with student credentials
-2. View available rooms in card layout
-3. **Search**: Use search bar to find rooms
-4. **Filter**: Filter by availability status
-5. **View Details**: See room information and availability
+3. Create/import the database using phpMyAdmin:
 
-## 🎨 Design System
+- Open `http://localhost/phpmyadmin`
+- Create a database named `school_system`
+- Import `database/schema.sql`
 
-### Color Palette
-- **Primary**: Maroon (#8B0000)
-- **Secondary**: White (#FFFFFF)
-- **Accent**: Light Gray (#F5F5F5)
-- **Success**: Green (#28A745)
-- **Danger**: Red (#DC3545)
+4. Check the database settings in `config/database.php`:
 
-### Typography
-- **Font Family**: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif
-- **Headings**: Bold, maroon color scheme
-- **Body Text**: Clean, readable dark gray
+```php
+private $host = 'localhost';
+private $db_name = 'school_system';
+private $username = 'root';
+private $password = '';
+```
 
-### Responsive Breakpoints
-- **Desktop**: 1200px+ (full layout)
-- **Tablet**: 768px-1199px (adapted layout)
-- **Mobile**: <768px (stacked layout)
+5. Open the app:
 
-## 🔧 Technical Details
+```text
+http://localhost/rms/index.html
+```
 
-### Data Storage
-- **localStorage** for user accounts and room data
-- **JSON format** for structured data
-- **Automatic data persistence** across sessions
+## Default Accounts
 
-### Security Features
-- **Role-based access control**
-- **Session management**
-- **Input validation**
-- **Confirmation dialogs** for destructive actions
+Use these accounts after importing the schema:
 
-### Browser Compatibility
-- **Modern browsers** (Chrome, Firefox, Safari, Edge)
-- **Mobile responsive** design
-- **No external dependencies**
+```text
+Instructor
+Username: admin
+Password: password
 
-## 📊 Sample Data
+Student
+Username: student
+Password: password
+```
 
-The system comes pre-loaded with:
-- **2 Default Users** (admin and student)
-- **5 Sample Rooms** across different buildings
-- **Mixed availability status** for demonstration
+New accounts created through `signup.html` are saved in either the `students` or `instructors` table depending on the selected role.
 
-## 🎯 Future Enhancements
+## Main Pages
 
-- Real-time room booking system
-- Calendar integration
-- Advanced reporting
-- Email notifications
-- Dark mode toggle
-- Room scheduling
-- Multi-building management
+- `index.html` - login page
+- `signup.html` - registration page
+- `admin.html` - instructor dashboard
+- `student.html` - student room availability view
 
-## 📞 Support
+## API Endpoints
 
-This is a demonstration project showcasing modern web development techniques with vanilla JavaScript. For questions or support, refer to the code comments and documentation within the files.
+Authentication:
 
----
+```text
+POST /rms/api/auth.php?action=register
+POST /rms/api/auth.php?action=login
+POST /rms/api/auth.php?action=logout
+GET  /rms/api/auth.php?action=user
+GET  /rms/api/auth.php?action=check
+```
 
-**College of Engineering and Architecture**  
-*Room Availability System*  
-*© 2024 - All rights reserved*
+Rooms:
+
+```text
+GET    /rms/api/rooms.php?action=list
+GET    /rms/api/rooms.php?action=get&id=1
+GET    /rms/api/rooms.php?action=stats
+POST   /rms/api/rooms.php?action=create
+PUT    /rms/api/rooms.php?action=update&id=1
+PUT    /rms/api/rooms.php?action=toggle&id=1
+DELETE /rms/api/rooms.php?action=delete&id=1
+```
+
+## Notes
+
+- Instructors can manage rooms.
+- Students can view and filter rooms.
+- The frontend uses `public/script-php.js`, which calls the PHP API and supports running the project under `localhost/rms`.
+- PHP sessions must be enabled for login and protected features to work.
+
+## Recent Auth Fix
+
+Signup and login are now connected to the PHP/MySQL backend. Login verifies the stored password hash correctly, and JSON responses preserve PHP session cookies so authenticated features continue working after login.

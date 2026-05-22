@@ -7,7 +7,13 @@ let rooms = [];
 let users = [];
 
 // ===== API Configuration =====
-const API_BASE_URL = '/api';
+const pathParts = window.location.pathname.split('/').filter(Boolean);
+const publicIndex = pathParts.indexOf('public');
+const fileName = pathParts[pathParts.length - 1] || '';
+const appPathParts = publicIndex >= 0
+    ? pathParts.slice(0, publicIndex)
+    : (fileName.includes('.') ? pathParts.slice(0, -1) : pathParts);
+const API_BASE_URL = `${appPathParts.length ? `/${appPathParts.join('/')}` : ''}/api`;
 const API_ENDPOINTS = {
     auth: `${API_BASE_URL}/auth.php`,
     rooms: `${API_BASE_URL}/rooms.php`

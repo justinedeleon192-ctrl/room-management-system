@@ -33,6 +33,23 @@ try {
 $method = $_SERVER['REQUEST_METHOD'];
 $action = $_GET['action'] ?? '';
 
+// Support friendly routes like /api/login, /api/register, /api/user, /api/logout
+// by inferring action from the requested path when action query param is not provided.
+if (empty($action)) {
+    $uriPath = parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH);
+    $base = rtrim(dirname(__DIR__), '/\\'); // .../api/.. = project root
+    $path = $uriPath;
+
+    // Examples:
+    // /api/login
+    // /api/register
+    // /api/user
+    // /api/logout
+    if (preg_match('#/api/(login|register|user|logout)$#', $path, $m)) {
+        $action = $m[1];
+    }
+}
+
 // Route the request
 switch ($method) {
     case 'POST':
@@ -156,14 +173,14 @@ function handleLogin() {
     try {
         // Check students table first
         $user = $database->fetch(
-            "SELECT id, fullname, email, username, 'student' as role FROM students WHERE username = ?",
+            "SELECT id, fullname, email, username, password, 'student' as role FROM students WHERE username = ?",
             [$data['username']]
         );
         
         // If not found in students, check instructors
         if (!$user) {
             $user = $database->fetch(
-                "SELECT id, fullname, email, username, 'instructor' as role FROM instructors WHERE username = ?",
+                "SELECT id, fullname, email, username, password, 'instructor' as role FROM instructors WHERE username = ?",
                 [$data['username']]
             );
         }

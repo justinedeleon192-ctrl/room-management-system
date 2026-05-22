@@ -12,7 +12,6 @@
  * @param int $httpCode
  */
 function sendJsonResponse($success, $message, $data = [], $httpCode = 200) {
-    header_remove();
     header('Content-Type: application/json');
     http_response_code($httpCode);
     
