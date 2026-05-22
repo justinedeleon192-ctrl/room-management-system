@@ -2,7 +2,7 @@
 -- Compatible with XAMPP MySQL
 -- Created for PHP migration from localStorage system
 
--- Create database
+-- Create databaseas
 CREATE DATABASE IF NOT EXISTS school_system;
 USE school_system;
 
