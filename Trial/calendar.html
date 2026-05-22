@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Calendar</title>
+    <!-- Tailwind CSS for sleek Google-like styling -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        .grid-rows-24 { grid-template-rows: repeat(24, minmax(3rem, 1fr)); }
+        .dragging { opacity: 0.5; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans h-screen flex flex-col">
+
+    <!-- HEADER / NAVIGATION -->
+    <header class="flex items-center justify-between px-6 py-4 bg-white border-b border-gray-200 shadow-xs">
+        <div class="flex items-center space-x-6">
+            <h1 class="text-xl font-bold text-blue-600 flex items-center space-x-2">
+                <span class="material-icons">📅</span> <span>MyCalendar</span>
+            </h1>
+            <button onclick="changeDate(-1)" class="p-2 hover:bg-gray-100 rounded-full transition">◀</button>
+            <button onclick="setToday()" class="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 text-sm font-medium transition">Today</button>
+            <button onclick="changeDate(1)" class="p-2 hover:bg-gray-100 rounded-full transition">▶</button>
+            <h2 id="currentDateLabel" class="text-lg font-semibold min-w-[150px]"></h2>
+        </div>
+        
+        <div class="flex items-center space-x-4">
+            <button onclick="openModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium text-sm shadow-sm transition">+ Add Task</button>
+            <div class="bg-gray-100 p-1 rounded-md flex space-x-1">
+                <button onclick="setView('day')" id="view-day" class="view-btn px-3 py-1.5 text-sm rounded-md transition">Day</button>
+                <button onclick="setView('week')" id="view-week" class="view-btn px-3 py-1.5 text-sm rounded-md bg-white shadow-xs font-medium">Week</button>
+                <button onclick="setView('month')" id="view-month" class="view-btn px-3 py-1.5 text-sm rounded-md transition">Month</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- CALENDAR CONTAINER -->
+    <main id="calendarContainer" class="flex-1 overflow-y-auto bg-white p-6"></main>
+
+    <!-- ADD TASK MODAL -->
+    <div id="taskModal" class="fixed inset-0 bg-black/40 backdrop-blur-xs hidden items-center justify-center z-50">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-md p-6 animate-in fade-in zoom-in-95 duration-150">
+            <h3 class="text-lg font-bold mb-4">Create New Task</h3>
+            <form id="taskForm" onsubmit="saveTask(event)">
+                <div class="mb-4">
+                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Title</label>
+                    <input type="text" id="taskTitle" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-hidden focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Date</label>
+                        <input type="date" id="taskDate" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-hidden focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div id="timeFieldGroup">
+                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Hour (0-23)</label>
+                        <input type="number" id="taskHour" min="0" max="23" value="9" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-hidden focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button type="button" onclick="closeModal()" class="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-md transition">Cancel</button>
+                    <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md shadow-xs transition">Save Task</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // State Management
+        let currentView = 'week'; 
+        let currentDate = new Date();
+        let tasks = [
+            { id: '1', title: 'Morning Coffee & Sync', date: formatDate(new Date()), hour: 9 },
+            { id: '2', title: 'Project Review', date: formatDate(getOffsetDate(1)), hour: 14 }
+        ];
+
+        // Drag and drop tracking
+        let draggedTaskId = null;
+
+        const container = document.getElementById('calendarContainer');
+        const dateLabel = document.getElementById('currentDateLabel');
+
+        // Helper Functions
+        function formatDate(d) {
+            return d.toISOString().split('T')[0];
+        }
+        function getOffsetDate(days) {
+            const d = new Date(currentDate);
+            d.setDate(d.getDate() + days);
+            return d;
+        }
+        function getStartOfWeek(d) {
+            const date = new Date(d);
+            const day = date.getDay();
+            const diff = date.getDate() - day;
+            return new Date(date.setDate(diff));
+        }
+
+        // View Management
+        function setView(view) {
+            currentView = view;
+            document.querySelectorAll('.view-btn').forEach(btn => btn.classList.remove('bg-white', 'shadow-xs', 'font-medium'));
+            document.getElementById(`view-${view}`).classList.add('bg-white', 'shadow-xs', 'font-medium');
+            render();
+        }
+
+        function changeDate(direction) {
+            if (currentView === 'day') currentDate.setDate(currentDate.getDate() + direction);
+            if (currentView === 'week') currentDate.setDate(currentDate.getDate() + (direction * 7));
+            if (currentView === 'month') currentDate.setMonth(currentDate.getMonth() + direction);
+            render();
+        }
+
+        function setToday() {
+            currentDate = new Date();
+            render();
+        }
+
+        // Render Routing
+        function render() {
+            container.innerHTML = '';
+            if (currentView === 'day') renderDayView();
+            if (currentView === 'week') renderWeekView();
+            if (currentView === 'month') renderMonthView();
+        }
+
+        // --- 1. DAY VIEW ---
+        function renderDayView() {
+            dateLabel.innerText = currentDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+            const dateStr = formatDate(currentDate);
+
+            let html = `<div class="grid grid-cols-[80px_1fr] border border-gray-200 rounded-lg overflow-hidden bg-white">
+                <div class="bg-gray-50 border-r border-gray-200">
+                    <div class="h-12 border-b border-gray-200 flex items-center justify-center font-semibold text-gray-500 text-sm">Time</div>
+                    ${Array.from({length: 24}, (_, i) => `<div class="h-16 pr-3 text-right text-xs text-gray-400 font-medium pt-2">${i}:00</div>`).join('')}
+                </div>
+                <div class="relative grid grid-rows-24 divide-y divide-gray-100">
+                    <div class="h-12 bg-gray-50 border-b border-gray-200 p-3 font-semibold text-blue-600">${currentDate.toLocaleDateString('en-US', { weekday: 'long' })}</div>`;
+
+            for (let i = 0; i < 24; i++) {
+                html += `<div class="h-16 p-1 drop-zone" data-date="${dateStr}" data-hour="${i}" ondragover="allowDrop(event)" ondrop="drop(event)"></div>`;
+            }
+            html += `</div></div>`;
+            container.innerHTML = html;
+            injectTasks();
+        }
+
+        // --- 2. WEEK VIEW ---
+        function renderWeekView() {
+            const startOfWeek = getStartOfWeek(currentDate);
+            const endOfWeek = new Date(startOfWeek);
+            endOfWeek.setDate(endOfWeek.getDate() + 6);
+            
+            dateLabel.innerText = `${startOfWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – ${endOfWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+
+            let html = `<div class="grid grid-cols-[80px_repeat(7,1fr)] border border-gray-200 rounded-lg overflow-hidden bg-white">
+                <div class="bg-gray-50 border-r border-gray-200 pt-12 divide-y divide-transparent">
+                    ${Array.from({length: 24}, (_, i) => `<div class="h-16 pr-3 text-right text-xs text-gray-400 font-medium pt-2">${i}:00</div>`).join('')}
+                </div>`;
+
+            for (let i = 0; i < 7; i++) {
+                const dayDate = new Date(startOfWeek);
+                dayDate.setDate(dayDate.getDate() + i);
+                const dateStr = formatDate(dayDate);
+                const isToday = formatDate(new Date()) === dateStr;
+
+                html += `<div class="divide-y divide-gray-100 relative">
+                    <div class="h-12 bg-gray-50 border-b border-gray-200 flex flex-col items-center justify-center p-1 ${isToday ? 'bg-blue-50 text-blue-600' : ''}">
+                        <span class="text-xs font-semibold tracking-wide uppercase">${dayDate.toLocaleDateString('en-US', { weekday: 'short' })}</span>
+                        <span class="text-sm font-bold">${dayDate.getDate()}</span>
+                    </div>`;
+                
+                for (let h = 0; h < 24; h++) {
+                    html += `<div class="h-16 p-1 drop-zone transition-colors hover:bg-gray-50/50" data-date="${dateStr}" data-hour="${h}" ondragover="allowDrop(event)" ondrop="drop(event)"></div>`;
+                }
+                html += `</div>`;
+            }
+            html += `</div>`;
+            container.innerHTML = html;
+            injectTasks();
+        }
+
+        // --- 3. MONTH VIEW ---
+        function renderMonthView() {
+            dateLabel.innerText = currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+
+            const firstDayIndex = new Date(year, month, 1).getDay();
+            const totalDays = new Date(year, month + 1, 0).getDate();
+
+            let html = `<div class="grid grid-cols-7 gap-px bg-gray-200 border border-gray-200 rounded-lg overflow-hidden">`;
+            const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            
+            weekdays.forEach(day => {
+                html += `<div class="bg-gray-50 py-2 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">${day}</div>`;
+            });
+
+            // Blank spots before month starts
+            for (let i = 0; i < firstDayIndex; i++) {
+                html += `<div class="bg-gray-50 h-32 p-2"></div>`;
+            }
+
+            // Month days
+            for (let day = 1; day <= totalDays; day++) {
+                const dayDate = new Date(year, month, day);
+                const dateStr = formatDate(dayDate);
+                const isToday = formatDate(new Date()) === dateStr;
+
+                html += `<div class="bg-white h-32 p-2 drop-zone flex flex-col justify-between group hover:bg-gray-50/50 transition" data-date="${dateStr}" data-hour="9" ondragover="allowDrop(event)" ondrop="drop(event)">
+                    <span class="text-sm font-semibold flex items-center justify-center w-6 h-6 rounded-full ${isToday ? 'bg-blue-600 text-white' : 'text-gray-700'}">${day}</span>
+                    <div class="flex-1 overflow-y-auto space-y-1 mt-1 task-container" data-date="${dateStr}"></div>
+                </div>`;
+            }
+            html += `</div>`;
+            container.innerHTML = html;
+            injectMonthTasks();
+        }
+
+        // --- TASK INJECTION ---
+        function injectTasks() {
+            tasks.forEach(task => {
+                const zone = document.querySelector(`.drop-zone[data-date="${task.date}"][data-hour="${task.hour}"]`);
+                if (zone && currentView !== 'month') {
+                    zone.appendChild(createTaskElement(task));
+                }
+            });
+        }
+
+        function injectMonthTasks() {
+            tasks.forEach(task => {
+                const container = document.querySelector(`.task-container[data-date="${task.date}"]`);
+                if (container) {
+                    container.appendChild(createTaskElement(task, true));
+                }
+            });
+        }
+
+        function createTaskElement(task, isMonth = false) {
+            const el = document.createElement('div');
+            el.className = `bg-blue-500 text-white text-xs px-2 py-1 rounded-md shadow-xs cursor-grab font-medium select-none truncate ${isMonth ? 'w-full mb-1' : 'h-full flex items-center'}`;
+            el.innerText = task.title;
+            el.setAttribute('draggable', 'true');
+            el.setAttribute('id', `task-${task.id}`);
+            el.addEventListener('dragstart', (e) => {
+                draggedTaskId = task.id;
+                el.classList.add('dragging');
+            });
+            el.addEventListener('dragend', () => el.classList.remove('dragging'));
+            return el;
+        }
+
+        // --- DRAG AND DROP HANDLERS ---
+        function allowDrop(e) {
+            e.preventDefault();
+        }
+
+        function drop(e) {
+            e.preventDefault();
+            const zone = e.target.closest('.drop-zone');
+            if (zone && draggedTaskId) {
+                const targetDate = zone.getAttribute('data-date');
+                const targetHour = parseInt(zone.getAttribute('data-hour'));
+
+                const task = tasks.find(t => t.id === draggedTaskId);
+                if (task) {
+                    task.date = targetDate;
+                    task.hour = targetHour;
+                    render();
+                }
+            }
+            draggedTaskId = null;
+        }
+
+        // --- MODAL & TASK MANAGEMENT ---
+        function openModal() {
+            document.getElementById('taskDate').value = formatDate(currentDate);
+            document.getElementById('timeFieldGroup').style.display = currentView === 'month' ? 'none' : 'block';
+            document.getElementById('taskModal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('taskModal').style.display = 'none';
+            document.getElementById('taskForm').reset();
+        }
+
+        function saveTask(e) {
+            e.preventDefault();
+            const title = document.getElementById('taskTitle').value;
+            const date = document.getElementById('taskDate').value;
+            const hour = currentView === 'month' ? 9 : parseInt(document.getElementById('taskHour').value);
+
+            tasks.push({
+                id: Date.now().toString(),
+                title,
+                date,
+                hour
+            });
+
+            closeModal();
+            render();
+        }
+
+        // Initialization
+        render();
+    </script>
+</body>
+</html>
