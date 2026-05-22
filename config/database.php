@@ -5,8 +5,6 @@
  */
 
 class Database {
-    // Database config can be overridden via environment variables.
-    // Works with XAMPP if you set them at the system/user level.
     private $host = 'localhost';
     private $db_name = 'school_system';
     private $username = 'root';
@@ -14,19 +12,10 @@ class Database {
     private $charset = 'utf8mb4';
     private $pdo;
 
-    private function applyEnvOverrides() {
-        $this->host = getenv('DB_HOST') ?: $this->host;
-        $this->db_name = getenv('DB_NAME') ?: $this->db_name;
-        $this->username = getenv('DB_USER') ?: $this->username;
-        $this->password = getenv('DB_PASS') ?: $this->password;
-        $this->charset = getenv('DB_CHARSET') ?: $this->charset;
-    }
-
     /**
      * Database constructor - initializes PDO connection
      */
     public function __construct() {
-        $this->applyEnvOverrides();
         $this->connect();
     }
 
