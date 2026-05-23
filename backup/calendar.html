@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CEA Room Management System - Calendar</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        .dragging { opacity: 0.4; }
+        /* Smooth scrolling for calendar grid container */
+        .custom-scroll::-webkit-scrollbar { width: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #4e1919; border-radius: 3px; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans h-screen flex flex-col overflow-hidden">
+
+    <!-- HEADER / NAVIGATION -->
+    <header class="flex items-center justify-between px-6 py-4 bg-white border-b border-gray-200 shadow-xs z-10 shrink-0">
+        <div class="flex items-center space-x-6">
+            <h1 class="text-xl font-bold text-red-800 flex items-center space-x-2">
+                <span>🏢</span> <span>CEA Room Management System</span>
+            </h1>
+            <button onclick="changeDate(-1)" class="p-2 hover:bg-gray-100 rounded-full cursor-pointer transition">◀</button>
+            <button onclick="setToday()" class="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 text-sm font-medium cursor-pointer transition">Today</button>
+            <button onclick="changeDate(1)" class="p-2 hover:bg-gray-100 rounded-full cursor-pointer transition">▶</button>
+            <h2 id="currentDateLabel" class="text-lg font-semibold min-w-[200px]"></h2>
+        </div>
+        
+        <div class="flex items-center space-x-4">
+            <!-- BACK BUTTON -->
+            <button onclick="window.location.href='admin.html'" class="border border-gray-300 hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-md font-medium text-sm shadow-xs cursor-pointer transition">◀ Back</button>
+            
+            <button onclick="addRoom()" class="border border-gray-300 hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-md font-medium text-sm shadow-xs cursor-pointer transition">+ Add Room</button>
+            
+            <button onclick="openModal()" class="bg-red-800 hover:bg-red-900 text-white px-4 py-2 rounded-md font-medium text-sm shadow-sm cursor-pointer transition">+ Book Room</button>
+            
+            <div class="bg-gray-100 p-1 rounded-md flex space-x-1">
+                <button onclick="setView('day')" id="view-day" class="view-btn px-3 py-1.5 text-sm rounded-md transition cursor-pointer">Day</button>
+                <button onclick="setView('week')" id="view-week" class="view-btn px-3 py-1.5 text-sm rounded-md transition cursor-pointer">Week</button>
+                <button onclick="setView('month')" id="view-month" class="view-btn px-3 py-1.5 text-sm rounded-md transition cursor-pointer">Month</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- CALENDAR CONTAINER -->
+    <main id="calendarContainer" class="flex-1 overflow-y-auto custom-scroll bg-white p-6 relative"></main>
+
+    <!-- ADD ROOM MODAL -->
+    <div id="addRoomModal" class="fixed inset-0 bg-black/40 backdrop-blur-xs hidden items-center justify-center z-50">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-md p-6 animate-in fade-in zoom-in-95 duration-150">
+            <h3 class="text-lg font-bold mb-4">Add New Room</h3>
+            <form id="addRoomForm" onsubmit="saveRoom(event)">
+                
+                <!-- Room Name Input -->
+                <div class="mb-4">
+                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Room Name / Number</label>
+                    <input type="text" id="newRoomName" required placeholder="e.g., Conference Room C, Training Hub" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-hidden focus:ring-2 focus:ring-red-700 text-sm">
+                </div>
+                
+                <!-- Seating Capacity Input -->
+                <div class="mb-4">
+                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Seating Capacity</label>
+                    <input type="number" id="newRoomCapacity" required min="1" placeholder="e.g., 10" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-hidden focus:ring-2 focus:ring-red-700 text-sm">
+                </div>
+
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button type="button" onclick="closeRoomModal()" class="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-md transition">Cancel</button>
+                    <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-red-800 hover:bg-red-900 rounded-md shadow-xs transition">Save Room</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ADD/EDIT BOOKING MODAL -->
+    <div id="roomModal" class="fixed inset-0 bg-black/40 backdrop-blur-xs hidden items-center justify-center z-50">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-md p-6 animate-in fade-in zoom-in-95 duration-150">
+            <h3 id="modalTitle" class="text-lg font-bold mb-4">Book a Room</h3>
+            <form id="roomForm" onsubmit="saveBooking(event)">
+                <input type="hidden" id="bookingId">
+                
+                <!-- Room Dropdown Selector -->
+                <div class="mb-4">
+                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Select Room</label>
+                    <select id="roomSelect" required class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white focus:outline-hidden focus:ring-2 focus:ring-red-700 text-sm"></select>
+                </div>
+                
+                <!-- Date input -->
+                <div class="mb-4">
+                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Date</label>
+                    <input type="date" id="bookingDate" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-hidden focus:ring-2 focus:ring-red-700 text-sm">
+                </div>
+                
+                <!-- Time frames -->
+                <div id="timeFieldGroup" class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Start Time</label>
+                        <input type="time" id="bookingStartTime" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-hidden focus:ring-2 focus:ring-red-700 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">End Time</label>
+                        <input type="time" id="bookingEndTime" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-hidden focus:ring-2 focus:ring-red-700 text-sm">
+                    </div>
+                </div>
+
+                <!-- Notes / Internal Details Input area -->
+                <div class="mb-4">
+                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Internal Notes / Agenda</label>
+                    <textarea id="bookingNotes" rows="3" placeholder="Add meeting links, required equipment, description..." class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-hidden focus:ring-2 focus:ring-red-700 text-sm"></textarea>
+                </div>
+
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button type="button" id="deleteBookingBtn" onclick="deleteCurrentBooking()" class="mr-auto text-sm font-medium text-red-600 hover:bg-red-50 px-3 py-2 rounded-md transition hidden">Remove Booking</button>
+                    <button type="button" onclick="closeModal()" class="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-md transition">Cancel</button>
+                    <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-red-800 hover:bg-red-900 rounded-md shadow-xs transition">Save Booking</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        const HOUR_HEIGHT = 64; 
+
+        // Track managed rooms and their capacities (Maps to rooms table database columns)
+        let rooms = [
+            { name: 'Boardroom Alpha', capacity: 12 },
+            { name: 'Innovation Lab', capacity: 8 }
+        ];
+
+        let currentView = 'week'; 
+        let currentDate = new Date();
+        
+        // Revised variables inside objects to align directly with database properties
+        let bookings = [
+            { id: '1', name: 'Boardroom Alpha', notes: 'Quarterly Sync with Executive Team. Projector required.', booking_date: formatDate(new Date()), start_time: '09:00', end_time: '10:30' },
+            { id: '2', name: 'Innovation Lab', notes: 'Brainstorming session. Bring sticky notes.', booking_date: formatDate(getOffsetDate(1)), start_time: '14:00', end_time: '16:15' }
+        ];
+
+        let draggedBookingId = null;
+        let dragStartMinutesOffset = 0; 
+
+        const container = document.getElementById('calendarContainer');
+        const dateLabel = document.getElementById('currentDateLabel');
+
+        // Helpers
+        function formatDate(d) {
+            return d.toISOString().split('T')[0];
+        }
+        function getOffsetDate(days) {
+            const d = new Date(currentDate);
+            d.setDate(d.getDate() + days);
+            return d;
+        }
+        function getStartOfWeek(d) {
+            const date = new Date(d);
+            const day = date.getDay();
+            const diff = date.getDate() - day;
+            return new Date(date.setDate(diff));
+        }
+        function timeToMinutes(timeStr) {
+            const [h, m] = timeStr.split(':').map(Number);
+            return h * 60 + m;
+        }
+        function minutesToTime(minutes) {
+            const h = Math.floor(minutes / 60).toString().padStart(2, '0');
+            const m = (minutes % 60).toString().padStart(2, '0');
+            return `${h}:${m}`;
+        }
+        function format12Hour(timeStr) {
+            let [h, m] = timeStr.split(':');
+            const ampm = Number(h) >= 12 ? 'PM' : 'AM';
+            h = Number(h) % 12 || 12;
+            return `${h}:${m} ${ampm}`;
+        }
+
+        // Opens the Add Room Modal
+        function addRoom() {
+            document.getElementById('addRoomForm').reset();
+            document.getElementById('addRoomModal').style.display = 'flex';
+        }
+
+        // Closes the Add Room Modal
+        function closeRoomModal() {
+            document.getElementById('addRoomModal').style.display = 'none';
+        }
+
+        // Handles saving the new room setup securely 
+        function saveRoom(e) {
+            e.preventDefault();
+            const name = document.getElementById('newRoomName').value.trim();
+            const capacity = parseInt(document.getElementById('newRoomCapacity').value) || 0;
+
+            if (rooms.some(r => r.name.toLowerCase() === name.toLowerCase())) {
+                alert("A room with that name already exists!");
+                return;
+            }
+
+            rooms.push({ name: name, capacity: capacity });
+            updateRoomDropdown();
+            render(); 
+            closeRoomModal();
+        }
+
+        // Dynamically populates the booking modal's room dropdown select element
+        function updateRoomDropdown() {
+            const select = document.getElementById('roomSelect');
+            if (!select) return;
+            
+            select.innerHTML = rooms.map(room => 
+                `<option value="${room.name}">${room.name} (Cap: ${room.capacity})</option>`
+            ).join('');
+        }
+
+        // View Control Route
+        function setView(view) {
+            currentView = view;
+            document.querySelectorAll('.view-btn').forEach(btn => btn.classList.remove('bg-white', 'shadow-xs', 'font-medium'));
+            document.getElementById(`view-${view}`).classList.add('bg-white', 'shadow-xs', 'font-medium');
+            render();
+        }
+
+        function changeDate(direction) {
+            if (currentView === 'day') currentDate.setDate(currentDate.getDate() + direction);
+            if (currentView === 'week') currentDate.setDate(currentDate.getDate() + (direction * 7));
+            if (currentView === 'month') currentDate.setMonth(currentDate.getMonth() + direction);
+            render();
+        }
+
+        function setToday() {
+            currentDate = new Date();
+            render();
+        }
+
+        function render() {
+            container.innerHTML = '';
+            if (currentView === 'day') renderDayView();
+            if (currentView === 'week') renderWeekView();
+            if (currentView === 'month') renderMonthView();
+        }
+
+        // --- 1. DAY VIEW ---
+        function renderDayView() {
+            dateLabel.innerText = currentDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+            const dateStr = formatDate(currentDate);
+
+            let html = `
+            <div class="grid grid-cols-[80px_1fr] border border-gray-200 rounded-lg overflow-hidden bg-white relative">
+                <div class="bg-gray-50 border-r border-gray-200 select-none pt-12">
+                    ${Array.from({length: 24}, (_, i) => `<div style="height: ${HOUR_HEIGHT}px" class="pr-3 text-right text-xs text-gray-400 font-medium pt-1">${i === 0 ? '12 AM' : i < 12 ? i + ' AM' : i === 12 ? '12 PM' : (i-12) + ' PM'}</div>`).join('')}
+                </div>
+                <div class="relative">
+                    <div class="h-12 bg-gray-50 border-b border-gray-200 p-3 font-semibold text-red-800 sticky top-0 z-10">${currentDate.toLocaleDateString('en-US', { weekday: 'long' })}</div>
+                    <div class="relative drop-zone" data-date="${dateStr}" style="height: ${HOUR_HEIGHT * 24}px" ondragover="allowDrop(event)" ondrop="drop(event)">
+                        ${Array.from({length: 24}, (_, i) => `<div style="top: ${i * HOUR_HEIGHT}px; height: ${HOUR_HEIGHT}px" class="absolute left-0 right-0 border-b border-gray-100 pointer-events-none"></div>`).join('')}
+                        <div id="day-booking-layer" class="absolute inset-0 pointer-events-none"></div>
+                    </div>
+                </div>
+            </div>`;
+            
+            container.innerHTML = html;
+            injectAbsoluteBookings([dateStr], ['day-booking-layer']);
+        }
+
+        // --- 2. WEEK VIEW ---
+        function renderWeekView() {
+            const startOfWeek = getStartOfWeek(currentDate);
+            const endOfWeek = new Date(startOfWeek);
+            endOfWeek.setDate(endOfWeek.getDate() + 6);
+            
+            dateLabel.innerText = `${startOfWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – ${endOfWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+
+            let html = `
+            <div class="grid grid-cols-[80px_repeat(7,1fr)] border border-gray-200 rounded-lg overflow-hidden bg-white relative">
+                <div class="bg-gray-50 border-r border-gray-200 pt-12 select-none">
+                    ${Array.from({length: 24}, (_, i) => `<div style="height: ${HOUR_HEIGHT}px" class="pr-3 text-right text-xs text-gray-400 font-medium pt-1">${i === 0 ? '12 AM' : i < 12 ? i + ' AM' : i === 12 ? '12 PM' : (i-12) + ' PM'}</div>`).join('')}
+                </div>`;
+
+            const activeDates = [];
+            const layerIds = [];
+
+            for (let i = 0; i < 7; i++) {
+                const dayDate = new Date(startOfWeek);
+                dayDate.setDate(dayDate.getDate() + i);
+                const dateStr = formatDate(dayDate);
+                const isToday = formatDate(new Date()) === dateStr;
+                
+                activeDates.push(dateStr);
+                layerIds.push(`week-layer-${i}`);
+
+                html += `
+                <div class="relative border-r border-gray-200 last:border-r-0">
+                    <div class="h-12 bg-gray-50 border-b border-gray-200 flex flex-col items-center justify-center p-1 sticky top-0 z-10 ${isToday ? 'bg-red-50 text-red-800' : ''}">
+                        <span class="text-xs font-semibold tracking-wide uppercase">${dayDate.toLocaleDateString('en-US', { weekday: 'short' })}</span>
+                        <span class="text-sm font-bold">${dayDate.getDate()}</span>
+                    </div>
+                    <div class="relative drop-zone transition-colors" data-date="${dateStr}" style="height: ${HOUR_HEIGHT * 24}px" ondragover="allowDrop(event)" ondrop="drop(event)">
+                        ${Array.from({length: 24}, (_, i) => `<div style="top: ${i * HOUR_HEIGHT}px; height: ${HOUR_HEIGHT}px" class="absolute left-0 right-0 border-b border-gray-100 pointer-events-none"></div>`).join('')}
+                        <div id="week-layer-${i}" class="absolute inset-0 pointer-events-none"></div>
+                    </div>
+                </div>`;
+            }
+            html += `</div>`;
+            container.innerHTML = html;
+            injectAbsoluteBookings(activeDates, layerIds);
+        }
+
+        // --- 3. MONTH VIEW ---
+        function renderMonthView() {
+            dateLabel.innerText = currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+
+            const firstDayIndex = new Date(year, month, 1).getDay();
+            const totalDays = new Date(year, month + 1, 0).getDate();
+
+            let html = `<div class="grid grid-cols-7 gap-px bg-gray-200 border border-gray-200 rounded-lg overflow-hidden">`;
+            const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            
+            weekdays.forEach(day => {
+                html += `<div class="bg-gray-50 py-2 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">${day}</div>`;
+            });
+
+            for (let i = 0; i < firstDayIndex; i++) {
+                html += `<div class="bg-gray-50 h-32 p-2"></div>`;
+            }
+
+            for (let day = 1; day <= totalDays; day++) {
+                const dayDate = new Date(year, month, day);
+                const dateStr = formatDate(dayDate);
+                const isToday = formatDate(new Date()) === dateStr;
+
+                html += `
+                <div class="bg-white h-32 p-2 drop-zone flex flex-col justify-between group hover:bg-gray-50/50 transition" data-date="${dateStr}" ondragover="allowDrop(event)" ondrop="drop(event)">
+                    <span class="text-sm font-semibold flex items-center justify-center w-6 h-6 rounded-full ${isToday ? 'bg-red-800 text-white' : 'text-gray-700'}">${day}</span>
+                    <div class="flex-1 overflow-y-auto space-y-1 mt-1 booking-container" data-date="${dateStr}"></div>
+                </div>`;
+            }
+            html += `</div>`;
+            container.innerHTML = html;
+            injectMonthBookings();
+        }
+
+        // --- RENDER INJECTORS ---
+        function injectAbsoluteBookings(dateStrings, containerIds) {
+            dateStrings.forEach((dateStr, index) => {
+                const targetLayer = document.getElementById(containerIds[index]);
+                if (!targetLayer) return;
+
+                // Revised references using database structure
+                const dayBookings = bookings.filter(b => b.booking_date === dateStr).sort((a, b) => timeToMinutes(a.start_time) - timeToMinutes(b.start_time));
+
+                dayBookings.forEach(booking => {
+                    const startMin = timeToMinutes(booking.start_time);
+                    const endMin = timeToMinutes(booking.end_time);
+                    const duration = Math.max(20, endMin - startMin); 
+
+                    const topPos = (startMin / 60) * HOUR_HEIGHT + 48; 
+                    const elementHeight = (duration / 60) * HOUR_HEIGHT;
+
+                    const roomMeta = rooms.find(r => r.name === booking.name);
+                    const capText = roomMeta ? `(Cap: ${roomMeta.capacity})` : '';
+
+                    const el = document.createElement('div');
+                    el.className = 'absolute left-2 right-2 bg-red-700 hover:bg-red-800 text-white p-2 rounded-md shadow-xs cursor-pointer pointer-events-auto flex flex-col justify-between select-none overflow-hidden border border-red-800 transition-colors';
+                    el.style.top = `${topPos}px`;
+                    el.style.height = `${elementHeight}px`;
+                    el.setAttribute('draggable', 'true');
+                    el.setAttribute('id', `booking-${booking.id}`);
+
+                    el.innerHTML = `
+                        <div>
+                            <div class="font-bold text-xs truncate leading-tight flex justify-between items-center">
+                                <span>🏢 ${booking.name}</span>
+                                <span class="text-[9px] bg-red-900/40 px-1 rounded-sm">${capText}</span>
+                            </div>
+                            ${booking.notes ? `<div class="text-[10px] opacity-90 line-clamp-2 mt-0.5 font-normal italic bg-red-800/30 px-1 py-0.5 rounded-xs">${booking.notes}</div>` : ''}
+                        </div>
+                        <div class="text-[9px] font-semibold mt-1 tracking-wider text-right">${format12Hour(booking.start_time)} - ${format12Hour(booking.end_time)}</div>
+                    `;
+
+                    el.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        openModal(booking.id);
+                    });
+
+                    el.addEventListener('dragstart', (e) => {
+                        draggedBookingId = booking.id;
+                        el.classList.add('dragging');
+                        
+                        const rect = el.getBoundingClientRect();
+                        const clickYOffset = e.clientY - rect.top;
+                        dragStartMinutesOffset = Math.floor((clickYOffset / HOUR_HEIGHT) * 60);
+                    });
+
+                    el.addEventListener('dragend', () => el.classList.remove('dragging'));
+
+                    targetLayer.appendChild(el);
+                });
+            });
+        }
+
+        function injectMonthBookings() {
+            bookings.forEach(booking => {
+                const dayContainer = document.querySelector(`.booking-container[data-date="${booking.booking_date}"]`);
+                if (dayContainer) {
+                    const roomMeta = rooms.find(r => r.name === booking.name);
+                    const capText = roomMeta ? ` Max Cap: ${roomMeta.capacity}` : '';
+
+                    const el = document.createElement('div');
+                    el.className = 'bg-red-700 text-white text-[10px] px-1.5 py-0.5 rounded-sm shadow-xs truncate font-medium cursor-pointer select-none block w-full text-left';
+                    el.innerText = `${booking.start_time} ${booking.name}`;
+                    el.title = `Room: ${booking.name}${capText}\nNotes: ${booking.notes || 'None'}`;
+                    el.onclick = (e) => { e.stopPropagation(); openModal(booking.id); };
+                    dayContainer.appendChild(el);
+                }
+            });
+        }
+
+        // --- DRAG AND DROP ENGINE ---
+        function allowDrop(e) {
+            e.preventDefault();
+        }
+
+        function drop(e) {
+            e.preventDefault();
+            const zone = e.target.closest('.drop-zone');
+            if (zone && draggedBookingId) {
+                const targetDate = zone.getAttribute('data-date');
+                const booking = bookings.find(b => b.id === draggedBookingId);
+                
+                if (booking) {
+                    booking.booking_date = targetDate;
+
+                    if (currentView !== 'month') {
+                        const rect = zone.getBoundingClientRect();
+                        const dropY = e.clientY - rect.top;
+                        
+                        let dropMinutePosition = Math.floor((dropY / HOUR_HEIGHT) * 60) - dragStartMinutesOffset;
+                        dropMinutePosition = Math.max(0, Math.min(1425, dropMinutePosition));
+                        dropMinutePosition = Math.round(dropMinutePosition / 15) * 15; 
+
+                        const duration = timeToMinutes(booking.end_time) - timeToMinutes(booking.start_time);
+                        
+                        booking.start_time = minutesToTime(dropMinutePosition);
+                        booking.end_time = minutesToTime(Math.min(1440, dropMinutePosition + duration));
+                    }
+                    render();
+                }
+            }
+            draggedBookingId = null;
+        }
+
+        // --- FORM & REGISTRATION MODAL CLOSURES ---
+        function openModal(editingId = null) {
+            if (rooms.length === 0) {
+                alert("Please add at least one room using the '+ Add Room' button before making a booking!");
+                return;
+            }
+
+            const form = document.getElementById('roomForm');
+            form.reset();
+            updateRoomDropdown(); 
+
+            if (editingId) {
+                const booking = bookings.find(b => b.id === editingId);
+                document.getElementById('modalTitle').innerText = "Edit Room Booking";
+                document.getElementById('bookingId').value = booking.id;
+                document.getElementById('roomSelect').value = booking.name;
+                document.getElementById('bookingDate').value = booking.booking_date;
+                document.getElementById('bookingStartTime').value = booking.start_time;
+                document.getElementById('bookingEndTime').value = booking.end_time;
+                document.getElementById('bookingNotes').value = booking.notes || '';
+                document.getElementById('deleteBookingBtn').classList.remove('hidden');
+            } else {
+                document.getElementById('modalTitle').innerText = "Book New Room";
+                document.getElementById('bookingId').value = "";
+                document.getElementById('bookingDate').value = formatDate(currentDate);
+                document.getElementById('bookingStartTime').value = "09:00";
+                document.getElementById('bookingEndTime').value = "10:00";
+                document.getElementById('bookingNotes').value = "";
+                document.getElementById('deleteBookingBtn').classList.add('hidden');
+            }
+
+            document.getElementById('roomModal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('roomModal').style.display = 'none';
+        }
+
+        // Saves booking logic matching schema variables
+        function saveBooking(e) {
+            e.preventDefault();
+            const id = document.getElementById('bookingId').value;
+            const name = document.getElementById('roomSelect').value;
+            const booking_date = document.getElementById('bookingDate').value;
+            const start_time = document.getElementById('bookingStartTime').value;
+            const end_time = document.getElementById('bookingEndTime').value;
+            const notes = document.getElementById('bookingNotes').value;
+
+            if (timeToMinutes(start_time) >= timeToMinutes(end_time)) {
+                alert("The reservation checkout end time must take place after the start check-in time.");
+                return;
+            }
+
+            if (id) {
+                const booking = bookings.find(b => b.id === id);
+                booking.name = name;
+                booking.booking_date = booking_date;
+                booking.start_time = start_time;
+                booking.end_time = end_time;
+                booking.notes = notes;
+            } else {
+                bookings.push({
+                    id: Date.now().toString(),
+                    name,
+                    booking_date,
+                    start_time,
+                    end_time,
+                    notes
+                });
+            }
+
+            closeModal();
+            render();
+        }
+
+        function deleteCurrentBooking() {
+            const id = document.getElementById('bookingId').value;
+            if (id) {
+                bookings = bookings.filter(b => b.id !== id);
+                closeModal();
+                render();
+            }
+        }
+
+        // Initialization
+        updateRoomDropdown();
+        setView('week');
+    </script>
+</body>
+</html>

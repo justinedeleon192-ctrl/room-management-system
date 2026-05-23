@@ -41,21 +41,36 @@ CREATE TABLE instructors (
     INDEX idx_instructors_username (username)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Create rooms table
+-- Create rooms table (Building column removed)
 CREATE TABLE rooms (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
-    building VARCHAR(255) NOT NULL,
     capacity INT NOT NULL DEFAULT 1,
     status ENUM('available', 'occupied') DEFAULT 'available',
+    
+    -- New structure: Date separated from times for easy adjustments
+    booking_date DATE NULL,
+    start_time TIME NULL,
+    end_time TIME NULL,
+    
+    -- Added notes column for XAMPP (MySQL/MariaDB) to hold meeting details/agendas
+    notes TEXT NULL,
+    
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    INDEX idx_rooms_start_time ON rooms (start_time),
-    INDEX idx_rooms_end_time ON rooms (end_time),
+    
+    -- Updated Indexes for the new fields
     INDEX idx_rooms_status (status),
-    INDEX idx_rooms_building (building),
+    INDEX idx_rooms_booking_date (booking_date),
+    INDEX idx_rooms_time_range (start_time, end_time),
+    
+    -- Constraints
     CONSTRAINT chk_capacity CHECK (capacity > 0),
-    CONSTRAINT chk_status CHECK (status IN ('available', 'occupied'))
+    -- Note: MySQL/MariaDB natively validates ENUM values, 
+    -- but this check ensures the business logic holds up if altered.
+    CONSTRAINT chk_status CHECK (status IN ('available', 'occupied')),
+    -- Ensures the room isn't booked backward in time
+    CONSTRAINT chk_valid_time_range CHECK (end_time > start_time)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Insert sample data for testing
@@ -69,16 +84,16 @@ INSERT INTO instructors (fullname, email, username, password) VALUES
 INSERT INTO students (fullname, email, username, password) VALUES 
 ('John Student', 'student@cea.edu', 'student', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi');
 
--- Sample rooms data
-INSERT INTO rooms (name, building, capacity, status) VALUES 
-('Room 101', 'Engineering Building', 30, 'available'),
-('Room 102', 'Engineering Building', 25, 'occupied'),
-('Lab 201', 'Science Building', 20, 'available'),
-('Lecture Hall A', 'Main Building', 100, 'available'),
-('Computer Lab', 'IT Building', 40, 'occupied'),
-('Conference Room B', 'Admin Building', 15, 'available'),
-('Study Hall C', 'Library Building', 50, 'available'),
-('Workshop D', 'Technical Building', 35, 'occupied');
+-- Sample rooms data (Building values removed)
+INSERT INTO rooms (name, capacity, status) VALUES 
+('Room 101', 30, 'available'),
+('Room 102', 25, 'occupied'),
+('Lab 201', 20, 'available'),
+('Lecture Hall A', 100, 'available'),
+('Computer Lab', 40, 'occupied'),
+('Conference Room B', 15, 'available'),
+('Study Hall C', 50, 'available'),
+('Workshop D', 35, 'occupied');
 
 -- Create view for unified user management (optional)
 CREATE OR REPLACE VIEW all_users AS
